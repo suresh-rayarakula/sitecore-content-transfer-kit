@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+}
+
+html,
+body {
+  background: #12151c;
+  color: #e7e9ee;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: #5ee6c9;
+  color: #0b0d12;
+}
+
+.manifest-rail {
+  background-image: repeating-linear-gradient(
+    90deg,
+    #2a3040 0,
+    #2a3040 1px,
+    transparent 1px,
+    transparent 14px
+  );
+}
+
+.scanline {
+  background: linear-gradient(180deg, transparent, rgba(94, 230, 201, 0.06));
+}
+
+/* focus visibility for keyboard users */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #5ee6c9;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

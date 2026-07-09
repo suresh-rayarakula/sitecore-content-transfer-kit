@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "app/api/transfer/route.ts": {
+      "maxDuration": 300
+    }
+  }
+}
