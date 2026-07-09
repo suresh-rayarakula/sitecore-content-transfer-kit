@@ -39,6 +39,14 @@ npm run dev
 
 Open http://localhost:3000 and use the standalone experience route at /standalone-extension.
 
+## Hosted demo
+
+You can also access the current hosted version at:
+
+https://sitecore-content-transfer-kit.vercel.app/
+
+This public app shows the same branded UI and experience as the repository.
+
 ## Credentials and authentication
 
 For each environment you need:
@@ -57,6 +65,10 @@ The app uses these values server-side in the API routes and does not persist the
 2. Deploy it to Vercel or another Node.js hosting platform.
 3. Register it in Sitecore App Studio as a custom app with the standalone route pointing to /standalone-extension.
 4. Install it into the target organization and open it from the Sitecore experience.
+
+On Vercel, use the deployed URL as the app's base deployment URL. The current public deployment is:
+
+https://sitecore-content-transfer-kit.vercel.app/
 
 > Large transfers can take several minutes. Make sure your hosting plan supports longer-running server functions.
 
