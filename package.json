@@ -1,8 +1,8 @@
 {
-  "name": "sitecore-content-transfer-console",
+  "name": "sitecore-content-transfer-kit",
   "version": "1.0.0",
   "private": true,
-  "description": "A Marketplace Custom App for SitecoreAI / XM Cloud that provides a GUI over the Content Transfer API and Item Transfer API, replacing the retired Package Designer/Installer for moving content between environments.",
+  "description": "A marketplace-style custom app for Sitecore XM Cloud that provides a guided UI over the Content Transfer API and Item Transfer API for moving content between environments.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
