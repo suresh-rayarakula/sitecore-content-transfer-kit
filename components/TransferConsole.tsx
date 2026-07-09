@@ -20,8 +20,9 @@ const SCOPES: Scope[] = ["SingleItem", "ItemAndDescendants"];
 const MERGE_STRATEGIES: MergeStrategy[] = [
   "OverrideExistingItem",
   "KeepExistingItem",
-  "LatestWin",
-  "OverrideExistingTree",
+  // TODO: Enable additional merge strategies in a future release
+  // "LatestWin",
+  // "OverrideExistingTree",
 ];
 
 let rowId = 0;
