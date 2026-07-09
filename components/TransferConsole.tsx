@@ -113,11 +113,10 @@ export default function TransferConsole({ orgLabel }: { orgLabel?: string }) {
     <div className="mx-auto max-w-6xl px-6 py-10">
       <header className="mb-8 flex items-end justify-between border-b border-line pb-6">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent">Transfer Yard</p>
+          <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent">Sitecore Content Transfer Kit</p>
           <h1 className="mt-1 text-3xl font-medium tracking-tight">Content Transfer Console</h1>
           <p className="mt-2 max-w-xl text-sm text-white/50">
-            Moves items between Sitecore environments using the Content Transfer API and Item
-            Transfer API — the supported replacement for the retired Package Designer/Installer.
+            Move items between Sitecore environments using the Content Transfer API and Item Transfer API — the supported replacement for the retired Package Designer/Installer.
           </p>
         </div>
         {orgLabel && (
