@@ -43,10 +43,25 @@ async function assertOk(res: Response, action: string) {
 function extractErrorDetail(body: string): string {
   if (!body) return "";
   try {
-    const json = JSON.parse(body) as { error?: string; error_description?: string; message?: string };
-    return json.error_description || json.message || json.error || body.slice(0, 300);
+    const json = JSON.parse(body) as { 
+      error?: string; 
+      error_description?: string; 
+      message?: string;
+      Message?: string;
+      detail?: string;
+      title?: string;
+    };
+    return (
+      json.error_description || 
+      json.message || 
+      json.Message ||
+      json.detail ||
+      json.title ||
+      json.error || 
+      body.slice(0, 500)
+    );
   } catch {
-    return body.slice(0, 300);
+    return body.slice(0, 500);
   }
 }
 
@@ -85,14 +100,25 @@ export async function initiateTransfer(
   database: string
 ): Promise<void> {
   const url = `${env.host}/sitecore/api/content/transfer/v1/transfers`;
+  const body = JSON.stringify({
+    TransferId: transferId,
+    Configuration: { DataTrees: dataTrees, Database: database },
+  });
+  console.log(`[initiateTransfer] URL: ${url}`);
+  console.log(`[initiateTransfer] TransferId: ${transferId}`);
+  console.log(`[initiateTransfer] Database: ${database}`);
+  
   const res = await fetch(url, {
     method: "POST",
     headers: authHeaders(token, { "Content-Type": "application/json" }),
-    body: JSON.stringify({
-      TransferId: transferId,
-      Configuration: { DataTrees: dataTrees, Database: database },
-    }),
+    body,
   });
+  
+  if (!res.ok) {
+    const errorBody = await res.text().catch(() => "");
+    console.log(`[initiateTransfer] HTTP ${res.status} response: ${errorBody}`);
+  }
+  
   await assertOk(res, "Initiating transfer");
 }
 
