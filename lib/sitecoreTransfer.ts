@@ -2,8 +2,11 @@ import type {
   BlobStatusResponse,
   DataTree,
   EnvConfig,
+  TransferDetailsResponse,
   TransferStatusResponse,
+  TransferValidationError,
 } from "./types";
+import { SITECORE_AUDIENCE, SITECORE_TOKEN_URL } from "./types";
 
 /**
  * Thin, explicit wrapper around the two APIs that replaced the retired
@@ -71,14 +74,16 @@ function authHeaders(token: string, extra: Record<string, string> = {}) {
 
 /** Obtains a bearer token via OAuth 2.0 client_credentials for one environment. */
 export async function getAccessToken(env: EnvConfig): Promise<string> {
+  const tokenUrl = env.tokenUrl || SITECORE_TOKEN_URL;
+  const audience = env.audience || SITECORE_AUDIENCE;
   const body = new URLSearchParams({
     grant_type: "client_credentials",
     client_id: env.clientId,
     client_secret: env.clientSecret,
+    audience,
   });
-  if (env.audience) body.set("audience", env.audience);
 
-  const res = await fetch(env.tokenUrl, {
+  const res = await fetch(tokenUrl, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
@@ -213,4 +218,90 @@ export async function verifyBlob(
   const res = await fetch(url, { headers: authHeaders(token) });
   await assertOk(res, "Verifying blob status");
   return res.json();
+}
+
+/**
+ * Step 8 (target): load the transfer record for a consumed source.
+ * When BlobState is TransferredWithErrors, ValidationErrors here explains why.
+ */
+export async function getTransferDetails(
+  env: EnvConfig,
+  token: string,
+  sourceName: string
+): Promise<TransferDetailsResponse> {
+  const url = `${env.host}/sitecore/shell/api/v3/ItemsTransfer/transfers/${encodeURIComponent(
+    sourceName
+  )}`;
+  const res = await fetch(url, { headers: authHeaders(token) });
+  await assertOk(res, "Fetching transfer details");
+  return res.json();
+}
+
+/** Terminal blob states that mean the consume finished (successfully or not). */
+export const TERMINAL_BLOB_FAILURE_STATES = new Set([
+  "TransferredWithErrors",
+  "Failed",
+  "Error",
+  "Cancelled",
+  "Canceled",
+]);
+
+/** Formats ValidationErrors / Errors from a transfer details payload into log lines. */
+export function formatTransferFailureDetails(
+  blob: BlobStatusResponse,
+  details: TransferDetailsResponse | null
+): string[] {
+  const lines: string[] = [];
+  lines.push(`BlobState: ${blob.BlobState}`);
+  if (blob.SourceName) lines.push(`Source: ${blob.SourceName}`);
+  if (blob.Error) lines.push(`Blob error: ${blob.Error}`);
+
+  if (details) {
+    const transferState = details.TransferState || details.State || details.Status;
+    if (transferState) lines.push(`TransferState: ${transferState}`);
+    if (details.Error) lines.push(`Transfer error: ${details.Error}`);
+    if (details.Message) lines.push(`Transfer message: ${details.Message}`);
+
+    const rawErrors =
+      details.ValidationErrors || details.Errors || details.FailedItems || [];
+    const formatted = formatValidationErrors(rawErrors);
+    if (formatted.length) {
+      lines.push(`Validation errors (${formatted.length}):`);
+      for (const err of formatted.slice(0, 25)) {
+        lines.push(`  - ${err}`);
+      }
+      if (formatted.length > 25) {
+        lines.push(`  … and ${formatted.length - 25} more`);
+      }
+    }
+  }
+
+  const hasValidationDetail = lines.some(
+    (l) =>
+      l.startsWith("Validation errors") ||
+      l.startsWith("Blob error:") ||
+      l.startsWith("Transfer error:")
+  );
+  if (blob.BlobState === "TransferredWithErrors" && !hasValidationDetail) {
+    lines.push(
+      "Hint: TransferredWithErrors usually means the path already exists on the target with a different item ID or template (e.g. System/Node vs Media folder), or a parent item is missing."
+    );
+  }
+
+  return lines;
+}
+
+function formatValidationErrors(
+  errors: TransferValidationError[] | string[] | null | undefined
+): string[] {
+  if (!errors?.length) return [];
+  return errors.map((err) => {
+    if (typeof err === "string") return err;
+    const path = err.ItemPath || err.itemPath || err.Path || "";
+    const id = err.ItemId || err.itemId || "";
+    const msg =
+      err.Message || err.message || err.Error || err.error || err.Details || JSON.stringify(err);
+    const parts = [path && `path ${path}`, id && `id ${id}`, msg].filter(Boolean);
+    return parts.join(" — ");
+  });
 }

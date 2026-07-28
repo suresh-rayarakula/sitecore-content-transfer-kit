@@ -3,17 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import EnvPanel from "./EnvPanel";
 import type { DataTree, EnvConfig, LogLine, MergeStrategy, Scope } from "@/lib/types";
+import { SITECORE_AUDIENCE, SITECORE_TOKEN_URL } from "@/lib/types";
 
 const emptyEnv: EnvConfig = {
   host: "",
-  tokenUrl: "",
+  tokenUrl: SITECORE_TOKEN_URL,
   clientId: "",
   clientSecret: "",
-  // Sitecore Cloud's OAuth (Auth0-based) token endpoint requires this on
-  // every client_credentials request — omit it and you get a 403
-  // access_denied, not a helpful "audience is required" message. Default
-  // it so people don't have to discover that the hard way.
-  audience: "https://api.sitecorecloud.io",
+  audience: SITECORE_AUDIENCE,
 };
 
 const SCOPES: Scope[] = ["SingleItem", "ItemAndDescendants"];
@@ -56,11 +53,9 @@ export default function TransferConsole({ orgLabel }: { orgLabel?: string }) {
   const canDispatch =
     !running &&
     source.host &&
-    source.tokenUrl &&
     source.clientId &&
     source.clientSecret &&
     target.host &&
-    target.tokenUrl &&
     target.clientId &&
     target.clientSecret &&
     rows.every((r) => r.ItemPath.trim().length > 0);

@@ -52,10 +52,10 @@ This public app shows the same branded UI and experience as the repository.
 For each environment you need:
 
 - Environment host
-- OAuth token URL
 - Client ID
 - Client secret
-- Audience (typically https://api.sitecorecloud.io)
+
+OAuth token URL (`https://auth.sitecorecloud.io/oauth/token`) and Audience (`https://api.sitecorecloud.io`) are hardcoded — they are the same for every Sitecore Cloud environment.
 
 The app uses these values server-side in the API routes and does not persist them.
 

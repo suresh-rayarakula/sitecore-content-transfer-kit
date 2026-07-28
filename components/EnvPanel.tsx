@@ -65,16 +65,6 @@ export default function EnvPanel({ label, accent, value, onChange }: Props) {
           />
         </Field>
 
-        <Field label="OAuth token URL">
-          <input
-            type="text"
-            placeholder="https://identity.sitecorecloud.io/oauth/token"
-            value={value.tokenUrl}
-            onChange={(e) => set({ tokenUrl: e.target.value })}
-            className="w-full rounded border border-line bg-ink px-3 py-2 font-mono text-sm text-white/90 placeholder:text-white/25 focus:border-white/30"
-          />
-        </Field>
-
         <div className="grid grid-cols-2 gap-3">
           <Field label="Client ID">
             <input
@@ -93,16 +83,6 @@ export default function EnvPanel({ label, accent, value, onChange }: Props) {
             />
           </Field>
         </div>
-
-        <Field label="Audience">
-          <input
-            type="text"
-            placeholder="https://api.sitecorecloud.io"
-            value={value.audience || ""}
-            onChange={(e) => set({ audience: e.target.value })}
-            className="w-full rounded border border-line bg-ink px-3 py-2 font-mono text-sm text-white/90 placeholder:text-white/25 focus:border-white/30"
-          />
-        </Field>
       </div>
 
       {testState === "ok" && (

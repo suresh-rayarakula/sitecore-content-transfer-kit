@@ -16,13 +16,23 @@ export interface DataTree {
 export interface EnvConfig {
   /** Environment host, e.g. https://xmc-org-tenant-envname.sitecorecloud.io (no trailing slash) */
   host: string;
-  /** OAuth 2.0 client_credentials token endpoint for this environment's API client */
-  tokenUrl: string;
+  /**
+   * OAuth 2.0 client_credentials token endpoint.
+   * Defaults to https://auth.sitecorecloud.io/oauth/token when omitted.
+   */
+  tokenUrl?: string;
   clientId: string;
   clientSecret: string;
-  /** Optional audience/resource parameter, if your identity provider requires one */
+  /**
+   * Audience/resource parameter for Sitecore Cloud OAuth.
+   * Defaults to https://api.sitecorecloud.io when omitted.
+   */
   audience?: string;
 }
+
+/** Shared Sitecore Cloud OAuth defaults (same for every environment). */
+export const SITECORE_TOKEN_URL = "https://auth.sitecorecloud.io/oauth/token";
+export const SITECORE_AUDIENCE = "https://api.sitecorecloud.io";
 
 export interface TransferRequestBody {
   source: EnvConfig;
@@ -43,10 +53,40 @@ export interface TransferStatusResponse {
 }
 
 export interface BlobStatusResponse {
-  BlobState: "Transferred" | string;
+  BlobState: "Transferred" | "TransferredWithErrors" | string;
   Error: string | null;
   SourceName: string;
   Name: string;
+}
+
+/** Item-level validation failure returned by the Item Transfer API. */
+export interface TransferValidationError {
+  Message?: string;
+  message?: string;
+  Error?: string;
+  error?: string;
+  ItemPath?: string;
+  itemPath?: string;
+  ItemId?: string;
+  itemId?: string;
+  Path?: string;
+  Details?: string;
+  [key: string]: unknown;
+}
+
+/** Transfer record returned by GET /ItemsTransfer/transfers/{sourceName}. */
+export interface TransferDetailsResponse {
+  TransferState?: string;
+  State?: string;
+  Status?: string;
+  Error?: string | null;
+  Message?: string | null;
+  ValidationErrors?: TransferValidationError[] | string[] | null;
+  Errors?: TransferValidationError[] | string[] | null;
+  FailedItems?: TransferValidationError[] | string[] | null;
+  SourceName?: string;
+  Name?: string;
+  [key: string]: unknown;
 }
 
 export interface LogLine {

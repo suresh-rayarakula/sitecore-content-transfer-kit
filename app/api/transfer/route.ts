@@ -1,7 +1,12 @@
 import { randomUUID } from "crypto";
 import { NextRequest } from "next/server";
 import * as sc from "@/lib/sitecoreTransfer";
-import type { LogLine, TransferRequestBody, TransferStatusResponse } from "@/lib/types";
+import type {
+  BlobStatusResponse,
+  LogLine,
+  TransferRequestBody,
+  TransferStatusResponse,
+} from "@/lib/types";
 
 // This route makes many sequential, sometimes slow (chunked/polling) calls
 // to Sitecore, so it needs the Node.js runtime (not Edge) and a generous
@@ -39,7 +44,6 @@ export async function POST(req: NextRequest) {
       const write = (line: LogLine) => controller.enqueue(encoder.encode(JSON.stringify(line) + "\n"));
       const info = (msg: string) => write({ msg, ts: Date.now(), level: "info" });
       const success = (msg: string) => write({ msg, ts: Date.now(), level: "success" });
-      const warn = (msg: string) => write({ msg, ts: Date.now(), level: "warn" });
       const fail = (msg: string) => write({ msg, ts: Date.now(), level: "error" });
 
       const db = database || "master";
@@ -114,21 +118,38 @@ export async function POST(req: NextRequest) {
 
           info("  Verifying blob transfer status...");
           let verified = false;
+          let lastBlob: BlobStatusResponse | undefined;
           for (let attempt = 1; attempt <= BLOB_MAX_ATTEMPTS; attempt++) {
             const blob = await sc.verifyBlob(target, targetToken, blobName);
+            lastBlob = blob;
+
             if (blob.BlobState === "Transferred") {
               success(`  BlobState: Transferred (source: ${blob.SourceName})`);
               verified = true;
               break;
             }
-            if (blob.Error) {
-              throw new Error(`Blob transfer reported an error: ${blob.Error}`);
+
+            // TransferredWithErrors / Failed are terminal — stop polling and surface details.
+            if (sc.TERMINAL_BLOB_FAILURE_STATES.has(blob.BlobState) || blob.Error) {
+              await reportBlobFailure(blob, target, targetToken, fail, info);
+              throw new Error(
+                `Transfer failed on target with BlobState '${blob.BlobState}'. See validation errors above.`
+              );
             }
+
             info(`  BlobState: ${blob.BlobState} (attempt ${attempt}/${BLOB_MAX_ATTEMPTS})...`);
             await sleep(BLOB_POLL_INTERVAL_MS);
           }
+
           if (!verified) {
-            warn("  Could not confirm 'Transferred' state within the timeout window — check the target environment manually.");
+            if (lastBlob) {
+              await reportBlobFailure(lastBlob, target, targetToken, fail, info);
+            }
+            throw new Error(
+              `Could not confirm 'Transferred' state within the timeout window (last state: ${
+                lastBlob?.BlobState ?? "unknown"
+              }). Check the target environment and the errors above.`
+            );
           }
         }
 
@@ -148,6 +169,31 @@ export async function POST(req: NextRequest) {
       "X-Content-Type-Options": "nosniff",
     },
   });
+}
+
+async function reportBlobFailure(
+  blob: Awaited<ReturnType<typeof sc.verifyBlob>>,
+  target: TransferRequestBody["target"],
+  targetToken: string,
+  fail: (msg: string) => void,
+  info: (msg: string) => void
+) {
+  let details: Awaited<ReturnType<typeof sc.getTransferDetails>> | null = null;
+  if (blob.SourceName) {
+    info(`  Fetching transfer details for source '${blob.SourceName}'...`);
+    try {
+      details = await sc.getTransferDetails(target, targetToken, blob.SourceName);
+    } catch (e) {
+      fail(
+        `  Could not load transfer details: ${e instanceof Error ? e.message : String(e)}`
+      );
+    }
+  }
+
+  const lines = sc.formatTransferFailureDetails(blob, details);
+  for (const line of lines) {
+    fail(`  ${line}`);
+  }
 }
 
 function sleep(ms: number) {
