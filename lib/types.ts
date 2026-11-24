@@ -54,3 +54,19 @@ export interface LogLine {
   ts: number;
   level?: "info" | "success" | "error" | "warn";
 }
+
+/** One node in the source content tree, as returned by the Authoring API. */
+export interface TreeNode {
+  itemId: string;
+  name: string;
+  path: string;
+  hasChildren: boolean;
+  templateName?: string;
+}
+
+export interface TreeResponse {
+  children: TreeNode[];
+  hasMore: boolean;
+  /** Pass back as `cursor` to fetch the next page of the same parent. */
+  cursor?: string;
+}
