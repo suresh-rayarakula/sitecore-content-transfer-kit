@@ -1,7 +1,6 @@
 "use client";
 
 import { ClientSDK } from "@sitecore-marketplace-sdk/client";
-import { XMC } from "@sitecore-marketplace-sdk/xmc";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export interface MarketplaceClientState {
@@ -31,12 +30,8 @@ let client: ClientSDK | undefined = undefined;
 
 async function getMarketplaceClient(): Promise<ClientSDK> {
   if (client) return client;
-  if (window.parent === window) {
-    throw new Error("Open this app from the Sitecore portal.");
-  }
   client = await ClientSDK.init({
     target: window.parent,
-    modules: [XMC],
   });
   return client;
 }

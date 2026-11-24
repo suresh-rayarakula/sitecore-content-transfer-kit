@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import type { ApplicationContext } from "@sitecore-marketplace-sdk/client";
 import { useMarketplaceClient } from "@/utils/hooks/useMarketplaceClient";
 import TransferConsole from "@/components/TransferConsole";
-import { toEnvironments } from "@/lib/xmEnvironments";
 
 export default function StandaloneExtensionPage() {
   const { client, error, isInitialized } = useMarketplaceClient();
@@ -19,13 +18,5 @@ export default function StandaloneExtensionPage() {
     }
   }, [client, error, isInitialized]);
 
-  return (
-    <TransferConsole
-      orgLabel={appContext?.name}
-      client={client}
-      environments={toEnvironments(appContext?.resourceAccess)}
-      contextReady={isInitialized && !error}
-      contextError={error?.message}
-    />
-  );
+  return <TransferConsole orgLabel={appContext?.name} />;
 }
